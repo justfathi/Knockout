@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html class="no-js">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title></title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width">
+
+        <script src="/js/vendor/modernizr-2.6.2-respond-1.1.0.min.js"></script>
+		<script type='text/javascript' src='/js/knockout-2.2.1.js'></script>
+		<script type='text/javascript' src='/js/knockout.mapping-latest.js'></script>
+		
+		<link href='http://fonts.googleapis.com/css?family=Dosis' rel='stylesheet' type='text/css'>
+    </head>
+    <body>
+
+
+	<div id="company">
+    Data will show within 2 seconds (ajax delay is set to 2)
+    <h1 data-bind="text: name"></h1>
+    <h2>Employees</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Full name</th>
+                <th>Last name</th>
+                <th>First name</th>
+                <th>Age</th>
+            </tr>            
+        </thead>
+        <tbody data-bind="foreach: employees">
+            <tr>
+                <td data-bind="text: fullName"></td>
+                <td data-bind="text: lastName"></td>
+                <td data-bind="text: firstName"></td>
+                <td data-bind="text: age"></td>
+            </tr>            
+        </tbody>
+    </table>
+</div>
+
+
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+        <script>window.jQuery || document.write('<script src="js/vendor/jquery-1.9.1.min.js"><\/script>')</script>
+
+        <script src="js/main.js"></script>
+		
+		<script type='text/javascript'>
+
+
+var company;
+
+function PersonViewModel(data) {
+    var personMapping = {
+        'ignore': ['twitter', 'webpage'],
+        'copy': ['age'],
+        'lastName': {
+            'create': function(options) {
+                return ko.observable(options.data.toUpperCase());
+            }
+        }
+    };
+
+    ko.mapping.fromJS(data, personMapping, this);
+
+    this.fullName = ko.computed(function() {
+        return this.firstName() + ' ' + this.lastName();
+    }, this);
+}
+
+function CompanyViewModel(data) {
+    var companyMapping = {
+        'ignore': ['address', 'website'],
+        'name': {
+            'create': function(options) {
+                return ko.observable(options.data.toUpperCase());
+            }
+        },
+        'employees': {
+            key: function(data) {
+                return ko.utils.unwrapObservable(data.personId);
+            },
+            create: function(options) {
+                return new PersonViewModel(options.data);
+            }
+        }
+    };
+
+    ko.mapping.fromJS(data, companyMapping, this);
+}
+
+$.ajax({
+    url: 'http://jsfiddle.net/echo/jsonp/',
+    type: 'POST',
+    data: {
+        json: JSON.stringify({
+            name: 'Atos',
+            website: 'http://atos.net',
+            address: {
+                street: 'River Ouest 80, Quai Voltaire',
+                zipCode: '95877',
+                city: 'Bezons, Paris'
+            },
+            employees: [{
+                personId: 1223,
+                firstName: 'Marco',
+                lastName: 'Franssen',
+                age: 26,
+                webpage: 'http://marcofranssen.nl',
+                twitter: '@marcofranssen'},
+            {
+                personId: 1,
+                firstName: 'Thierry',
+                lastName: 'Breton',
+                age: null,
+                webpage: '',
+                twitter: ''},
+            {
+                personId: 1233213,
+                firstName: 'John',
+                lastName: 'Doe',
+                age: 33,
+                webpage: 'http://john.doe',
+                twitter: '@johndoe'}]
+        }),
+        delay: 2
+    },
+    success: function(response) {
+        company = new CompanyViewModel(response);
+        ko.applyBindings(company, $('#company').get(0));
+    },
+    error: function(response) {
+        alert('something went wrong: ' + response);
+    }
+});
+
+
+		</script>
+
+		<script>
+            var _gaq=[['_setAccount','UA-XXXXX-X'],['_trackPageview']];
+            (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+            g.src=('https:'==location.protocol?'//ssl':'//www')+'.google-analytics.com/ga.js';
+            s.parentNode.insertBefore(g,s)}(document,'script'));
+        </script>
+		
+		
+    </body>
+</html>
